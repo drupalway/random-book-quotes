@@ -66,24 +66,23 @@
 
         function getBooksInfo() {
             gapi.client.books.mylibrary.bookshelves.volumes.list({
-                'shelf': '7'
+                'shelf': '7' //this bookshelf contains all account's books
             }).then(function(resp) {
-
                 var allBooks = [];
 
                 _.forEach(resp.result.items, function(book) {
                     getBookAnnotations(book.id)
-                            .then(function(annotationsList) {
-                                var authors = _.reduce(book.volumeInfo.authors, function(allauthors, item) {
-                                    return allauthors + ' / ' + item;
-                                });
-
-                                allBooks.push({
-                                    id: book.id,
-                                    annotations: annotationsList,
-                                    authors: authors
-                                });
+                        .then(function(annotationsList) {
+                            var authors = _.reduce(book.volumeInfo.authors, function(allauthors, item) {
+                                return allauthors + ' / ' + item;
                             });
+
+                            allBooks.push({
+                                id: book.id,
+                                annotations: annotationsList,
+                                authors: authors
+                            });
+                        });
                 });
             });
         }
@@ -92,10 +91,9 @@
             return gapi.client.books.mylibrary.annotations.list({
                 'volumeId': bookId,
                 'contentVersion': '1'
-            })
-                    .then(function(resp) {
-                        return _.map(resp.result.items, 'selectedText');
-                    });
+            }).then(function(resp) {
+                return _.map(resp.result.items, 'selectedText');
+            });
         }
     </script>
     <script async defer src="https://apis.google.com/js/api.js"
