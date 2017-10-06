@@ -7,115 +7,96 @@
   <body>
     <p>THE LIST OF YOUR BOOKS</p>
 
-    <!--Add buttons to initiate auth sequence and sign out-->
     <button id="authorize-button" style="display: none;">Authorize</button>
     <button id="signout-button" style="display: none;">Sign Out</button>
 
-    <div id="content"></div>
 
     <script type="text/javascript">
-      // Enter an API key from the Google API Console:
-      //   https://console.developers.google.com/apis/credentials
-      var apiKey = 'AIzaSyB-1fyO8l_CMTs31BkoFRKPS2bWQ18AwOc';
+        var apiKey = 'PASTE_YOUR_API_KEY_HERE';
+        var discoveryDocs = ["https://www.googleapis.com/discovery/v1/apis/books/v1/rest"];
+        var clientId = 'PASTE_YOUR_CLIENT_ID_HERE';
+        var scopes = 'https://www.googleapis.com/auth/books';
 
-      // Enter the API Discovery Docs that describes the APIs you want to
-      // access. In this example, we are accessing the People API, so we load
-      // Discovery Doc found here: https://developers.google.com/people/api/rest/
-      var discoveryDocs = ["https://www.googleapis.com/discovery/v1/apis/books/v1/rest"];
+        var authorizeButton = document.getElementById('authorize-button');
+        var signoutButton = document.getElementById('signout-button');
 
-      // Enter a client ID for a web application from the Google API Console:
-      //   https://console.developers.google.com/apis/credentials?project=_
-      // In your API Console project, add a JavaScript origin that corresponds
-      //   to the domain where you will be running the script.
-      var clientId = '755386850718-qd4o4feqsj69qru4pclvmlmes33l48pt.apps.googleusercontent.com';
-
-      // Enter one or more authorization scopes. Refer to the documentation for
-      // the API or https://developers.google.com/people/v1/how-tos/authorizing
-      // for details.
-      var scopes = 'https://www.googleapis.com/auth/books';
-
-      var authorizeButton = document.getElementById('authorize-button');
-      var signoutButton = document.getElementById('signout-button');
-
-      function handleClientLoad() {
-        // Load the API client and auth2 library
-        gapi.load('client:auth2', initClient);
-      }
-
-      function initClient() {
-        gapi.client.init({
-            apiKey: apiKey,
-            discoveryDocs: discoveryDocs,
-            clientId: clientId,
-            scope: scopes
-        }).then(function () {
-          // Listen for sign-in state changes.
-          gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
-
-          // Handle the initial sign-in state.
-          updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-
-          authorizeButton.onclick = handleAuthClick;
-          signoutButton.onclick = handleSignoutClick;
-        });
-      }
-
-      function updateSigninStatus(isSignedIn) {
-        if (isSignedIn) {
-          authorizeButton.style.display = 'none';
-          signoutButton.style.display = 'block';
-          makeApiCall();
-        } else {
-          authorizeButton.style.display = 'block';
-          signoutButton.style.display = 'none';
+        function handleClientLoad() {
+            // Load the API client and auth2 library
+            gapi.load('client:auth2', initClient);
         }
-      }
 
-      function handleAuthClick(event) {
-        gapi.auth2.getAuthInstance().signIn();
-      }
+        function initClient() {
+            gapi.client.init({
+                apiKey: apiKey,
+                discoveryDocs: discoveryDocs,
+                clientId: clientId,
+                scope: scopes
+            }).then(function() {
+                // Listen for sign-in state changes.
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
 
-      function handleSignoutClick(event) {
-        gapi.auth2.getAuthInstance().signOut();
-      }
+                // Handle the initial sign-in state.
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
 
-      // Load the API and make an API call.  Display the results on the screen.
-
-      function makeApiCall() {
-        gapi.client.books.mylibrary.bookshelves.volumes.list({
-          'shelf': '7'
-        }).then(function(resp) {
-
-          var allBooks = [];
-
-          _.forEach(resp.result.items, function(book) {
-            getBookAnnotations(book.id)
-            .then(function(annotationsList) {
-              var authors = _.reduce(book.volumeInfo.authors, function(allauthors, item) {
-                return allauthors + ' / ' + item;
-              });
-
-              allBooks.push({
-                id: book.id,
-                annotations: annotationsList,
-                authors: authors
-              });
+                authorizeButton.onclick = handleAuthClick;
+                signoutButton.onclick = handleSignoutClick;
             });
-          });
-          console.log(allBooks);
-        });
-      }
+        }
 
-      function getBookAnnotations(bookId) {
-        return gapi.client.books.mylibrary.annotations.list({
-          'volumeId': bookId,
-          'contentVersion' : '1'
-        })
-        .then(function(resp) {
-          return _.map(resp.result.items, 'selectedText');
-        });
-      }
+        function updateSigninStatus(isSignedIn) {
+            if (isSignedIn) {
+                authorizeButton.style.display = 'none';
+                signoutButton.style.display = 'block';
+                getBooksInfo();
+            } else {
+                authorizeButton.style.display = 'block';
+                signoutButton.style.display = 'none';
+            }
+        }
 
+        function handleAuthClick(event) {
+            gapi.auth2.getAuthInstance().signIn();
+        }
+
+        function handleSignoutClick(event) {
+            gapi.auth2.getAuthInstance().signOut();
+        }
+
+        // Load the API and make an API call.  Display the results on the screen.
+
+        function getBooksInfo() {
+            gapi.client.books.mylibrary.bookshelves.volumes.list({
+                'shelf': '7'
+            }).then(function(resp) {
+
+                var allBooks = [];
+
+                _.forEach(resp.result.items, function(book) {
+                    getBookAnnotations(book.id)
+                            .then(function(annotationsList) {
+                                var authors = _.reduce(book.volumeInfo.authors, function(allauthors, item) {
+                                    return allauthors + ' / ' + item;
+                                });
+
+                                allBooks.push({
+                                    id: book.id,
+                                    annotations: annotationsList,
+                                    authors: authors
+                                });
+                            });
+                });
+            });
+        }
+
+        function getBookAnnotations(bookId) {
+            return gapi.client.books.mylibrary.annotations.list({
+                'volumeId': bookId,
+                'contentVersion': '1'
+            })
+                    .then(function(resp) {
+                        return _.map(resp.result.items, 'selectedText');
+                    });
+        }
     </script>
     <script async defer src="https://apis.google.com/js/api.js"
             onload="this.onload=function(){};handleClientLoad()"
